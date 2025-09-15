@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}My Tasks{% endblock %}
+{% block content %}
+<h2>My Tasks</h2>
+
+<div class="toolbar">
+    <form method="get">
+        <input type="text" name="search" placeholder="Search…" value="{{ search }}">
+        <select name="ordering">
+        <option value="-created_at" {% if ordering == "-created_at" %}selected{% endif %}>Newest</option>
+        <option value="created_at"  {% if ordering == "created_at" %}selected{% endif %}>Oldest</option>
+        <option value="-updated_at" {% if ordering == "-updated_at" %}selected{% endif %}>Recently updated</option>
+        <option value="due_date"    {% if ordering == "due_date" %}selected{% endif %}>Due date ↑</option>
+        <option value="-due_date"   {% if ordering == "-due_date" %}selected{% endif %}>Due date ↓</option>
+        </select>
+        <button class="btn" type="submit">Apply</button>
+        <a class="btn" href="{% url 'task_create' %}">+ New Task</a>
+    </form>
+</div>
+
+<table>
+    <thead>
+        <tr>
+        <th>Title</th><th>Due</th><th>Done</th><th>Updated</th><th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for t in page_obj.object_list %}
+        <tr>
+        <td>{{ t.title }}</td>
+        <td>{{ t.due_date|default:"—" }}</td>
+        <td>{{ t.completed|yesno:"✓,✗" }}</td>
+        <td>{{ t.updated_at }}</td>
+        <td>
+        <form class="inline" method="post" action="{% url 'task_toggle' t.pk %}">
+            {% csrf_token %}
+            <button class="btn" type="submit">
+                {% if t.completed %}Mark Undone{% else %}Mark Done{% endif %}
+            </button>
+        </form>
+            <a class="btn" href="{% url 'task_update' t.pk %}">Edit</a>
+            <a class="btn btn-danger" href="{% url 'task_delete' t.pk %}">Delete</a>
+        </td>
+        </tr>
+    {% empty %}
+        <tr><td colspan="5">No tasks yet.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<!-- Pagination controls -->
+<div class="toolbar">
+    {% if page_obj.has_previous %}
+        <a class="btn" href="?page={{ page_obj.previous_page_number }}&search={{ search }}&ordering={{ ordering }}">← Prev</a>
+    {% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a class="btn" href="?page={{ page_obj.next_page_number }}&search={{ search }}&ordering={{ ordering }}">Next →</a>
+    {% endif %}
+</div>
+{% endblock %}
